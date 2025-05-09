@@ -16,7 +16,7 @@
     'use strict';
     
     // Base URL for the GitHub repository
-    const REPO_URL = 'https://raw.githubusercontent.com/YOUR_USERNAME/margoedi-tools/main/src/';
+    const REPO_URL = 'https://raw.githubusercontent.com/sneccc/Ideotagram_patcher/main/src';
     
     // List of modules to load in order
     const modules = [
