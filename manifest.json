@@ -1,0 +1,25 @@
+{
+    "manifest_version": 2,
+    "name": "Idiotagrama Patcher",
+    "version": "1.0",
+    "description": "A tool for enhancing Margoedi with image generation, sampling, and Eagle integration",
+    "permissions": [
+        "storage",
+        "https://ideogram.ai/*"
+    ],
+    "content_scripts": [
+        {
+            "matches": ["https://ideogram.ai/*"],
+            "js": [
+                "src/utils.js",
+                "src/db.js",
+                "src/api.js",
+                "src/eagle.js",
+                "src/ui.js",
+                "src/image-generation.js",
+                "src/image-processing.js",
+                "src/main.js"
+            ]
+        }
+    ]
+} 

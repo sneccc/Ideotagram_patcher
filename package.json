@@ -1,0 +1,21 @@
+{
+  "name": "margoedi-tools",
+  "version": "1.0.0",
+  "description": "A userscript for enhancing Margoedi with additional functionality",
+  "main": "build.js",
+  "scripts": {
+    "build": "node build.js",
+    "watch": "nodemon --watch src --ext js --exec \"node build.js\""
+  },
+  "keywords": [
+    "userscript",
+    "margoedi",
+    "tampermonkey",
+    "eagle"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+} 
