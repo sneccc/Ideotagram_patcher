@@ -5,24 +5,6 @@
 // Default configuration
 const STYLE_EXPERT = "ILLUSTRATION"; // Options: "DEFAULT", "RENDER_3D", "ILLUSTRATION", "PHOTO", etc.
 
-// State for authentication
-let bearerToken = "";
-let userId = "";
-let userHandle = "";
-
-// Function to set authentication details
-function setAuthDetails(token, user_id, user_handle) {
-    bearerToken = token;
-    userId = user_id || "";
-    userHandle = user_handle || "";
-    
-    return {
-        bearerToken,
-        userId,
-        userHandle
-    };
-}
-
 // Function to get basic headers with auth
 function getHeaders() {
     const headers = {
@@ -30,6 +12,9 @@ function getHeaders() {
         'Referer': 'https://ideogram.ai/t/explore',
         'Origin': 'https://ideogram.ai'
     };
+    
+    // Get the authentication from the window object
+    const { bearerToken } = window.authState || {};
     
     if (bearerToken) {
         headers['Authorization'] = `Bearer ${bearerToken}`;
@@ -117,6 +102,8 @@ function deleteApi(url, payload) {
 // Function to submit an event
 function submitEvent(eventKey, metadata) {
     const eventUrl = 'https://ideogram.ai/api/e/submit';
+    const { userId, userHandle } = window.authState || {};
+    
     const payload = {
         event_key: eventKey,
         metadata: JSON.stringify({
@@ -125,7 +112,7 @@ function submitEvent(eventKey, metadata) {
             userAgent: navigator.userAgent,
             isMobileLayout: false,
             userHandle: userHandle || "",
-            userId: userId,
+            userId: userId || "",
             location: Intl.DateTimeFormat().resolvedOptions().timeZone,
             generationInProgress: false,
             ...metadata
@@ -139,6 +126,7 @@ function submitEvent(eventKey, metadata) {
 async function downloadImageWithTimeout(imageUrl, responseId, maxRetries = 2) {
     const timeout = 5000; // 5 seconds timeout
     let attempts = 0;
+    const { bearerToken } = window.authState || {};
 
     while (attempts <= maxRetries) {
         try {
@@ -199,13 +187,13 @@ async function downloadImageWithTimeout(imageUrl, responseId, maxRetries = 2) {
 // Export API functions
 window.idioApi = {
     STYLE_EXPERT,
-    setAuthDetails,
     getHeaders,
     fetchApi,
     postApi,
     deleteApi,
     submitEvent,
     downloadImageWithTimeout,
+    
     // Getters for auth state
-    getAuthState: () => ({ bearerToken, userId, userHandle })
+    getAuthState: () => window.authState || { bearerToken: "", userId: "", userHandle: "" }
 }; 
