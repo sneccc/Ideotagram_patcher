@@ -18,75 +18,57 @@
     // Base URL for the GitHub repository
     const REPO_URL = 'https://raw.githubusercontent.com/sneccc/Ideotagram_patcher/main/src/';
     
-    // Get stored authentication values or use defaults
-    let bearerToken = GM_getValue("bearerToken", "");
-    let userId = GM_getValue("userId", "");
-    let userHandle = GM_getValue("userHandle", "");
+    // Initialize global namespace (like MJ in mj_patcher)
+    window.IDIO = window.IDIO || {};
     
-    // Function to set the Bearer token and User ID
-    function setBearerToken() {
-        // Fetch current values from storage to pre-fill the prompt accurately
-        const currentToken = GM_getValue('bearerToken', '');
-        // Use the initial placeholder/default from the config object definition if nothing is in storage.
-        // This mirrors what loadConfig would establish for config.userId / config.userHandle initially.
-        const currentUserId = GM_getValue('userId', config.userId);
-        const currentUserHandle = GM_getValue('userHandle', config.userHandle);
-
-        const input = prompt(
-            'Enter your Bearer token, User ID, and User Handle separated by comma.\nFormat: token,userid,userhandle\nTo clear a value, leave its part empty (e.g., "token,,handle" clears User ID).',
-            `${currentToken},${currentUserId},${currentUserHandle}`
-        );
-
-        if (input === null) { // User pressed cancel
-            console.log('Token setting cancelled.');
-            return;
+    // Create API/settings objects
+    IDIO.API = {
+        // Store settings
+        settings: {
+            bearerToken: GM_getValue("bearerToken", ""),
+            userId: GM_getValue("userId", ""),
+            userHandle: GM_getValue("userHandle", "")
+        },
+        
+        // Add a function to save settings
+        saveSettings: function() {
+            GM_setValue("bearerToken", IDIO.API.settings.bearerToken);
+            GM_setValue("userId", IDIO.API.settings.userId);
+            GM_setValue("userHandle", IDIO.API.settings.userHandle);
+            console.log("Settings saved to GM storage");
+        },
+        
+        // Add function to set auth details from UI
+        setAuthDetails: function(token, userId, userHandle) {
+            IDIO.API.settings.bearerToken = token || "";
+            
+            // Only update if provided
+            if (userId !== undefined) {
+                IDIO.API.settings.userId = userId || "";
+            }
+            
+            if (userHandle !== undefined) {
+                IDIO.API.settings.userHandle = userHandle || "";
+            }
+            
+            this.saveSettings();
+            return {
+                bearerToken: IDIO.API.settings.bearerToken,
+                userId: IDIO.API.settings.userId,
+                userHandle: IDIO.API.settings.userHandle
+            };
         }
-
-        const parts = input.split(',');
-        // Get trimmed input for each part, default to empty string if part is missing then trim (though split usually gives empty strings)
-        const tokenInput = (parts[0] !== undefined ? parts[0] : "").trim();
-        // userIdInput will be undefined if only token was entered, or "" if "token,," was entered.
-        const userIdInput = parts.length > 1 ? (parts[1] !== undefined ? parts[1] : "").trim() : undefined;
-        const userHandleInput = parts.length > 2 ? (parts[2] !== undefined ? parts[2] : "").trim() : undefined;
-
-        // Always update bearer token based on input. If empty, it's cleared.
-        config.bearerToken = tokenInput;
-        GM_setValue('bearerToken', config.bearerToken);
-        if (config.bearerToken) {
-            console.log('Bearer token set successfully.');
-        } else {
-            console.log('Bearer token cleared or not provided.');
-        }
-
-        // User ID: If part was provided in the input (even if an empty string), update.
-        // If not provided (e.g., user only entered a token), config.userId retains its current (loaded/default) value.
-        if (userIdInput !== undefined) {
-            config.userId = userIdInput;
-            GM_setValue('userId', config.userId);
-            console.log(`User ID set to: "${config.userId}"`);
-        } else {
-            // userIdInput is undefined, meaning user entered only "token" or submitted without changing that part.
-            // config.userId already holds currentUserId (loaded from storage or the initial default).
-            // No change to config.userId, and GM_setValue is not strictly needed unless ensuring default is written.
-            console.log(`User ID not specified in input, remains: "${config.userId}"`);
-        }
-
-        // User Handle: If part was provided in the input, update.
-        if (userHandleInput !== undefined) {
-            config.userHandle = userHandleInput;
-            GM_setValue('userHandle', config.userHandle);
-            console.log(`User Handle set to: "${config.userHandle}"`);
-        } else {
-            // userHandleInput is undefined. config.userHandle retains its current value.
-            console.log(`User Handle not specified in input, remains: "${config.userHandle}"`);
-        }
-
-        console.log('Configuration updated:');
-        console.log(`Bearer Token: ${config.bearerToken}`);
-        console.log(`User ID: ${config.userId}`);
-        console.log(`User Handle: ${config.userHandle}`);
-        alert('Token, User ID, and User Handle settings have been processed and saved.');
-    }
+    };
+    
+    // For backward compatibility, maintain idioConfig and getAuthState
+    window.idioConfig = IDIO.API.settings;
+    window.getAuthState = function() {
+        return {
+            bearerToken: IDIO.API.settings.bearerToken,
+            userId: IDIO.API.settings.userId,
+            userHandle: IDIO.API.settings.userHandle
+        };
+    };
     
     // List of modules to load in order
     const modules = [
@@ -134,11 +116,9 @@
     // Function to load all modules sequentially
     async function loadAllModules() {
         console.log('Margoedi Tools: Loading modules...');
+        console.log('Auth state loaded:', IDIO.API.settings);
         
         try {
-            // Initialize and share auth state before loading modules
-            updateAuthState();
-            
             // Load modules in sequence
             for (const module of modules) {
                 const moduleUrl = REPO_URL + module;
@@ -158,32 +138,13 @@
         }
     }
     
-    // Function to update the authentication state
-    function updateAuthState() {
-        // Share auth state globally
-        window.authState = { bearerToken, userId, userHandle };
-        
-        // Create auth state getter for consistent access
-        window.getAuthState = function() {
-            return {
-                bearerToken: GM_getValue("bearerToken", ""),
-                userId: GM_getValue("userId", ""),
-                userHandle: GM_getValue("userHandle", "")
-            };
-        };
-    }
-    
     // Function to initialize the UI
     function initUI() {
-        // Expose the auth state and token setter to the window
-        updateAuthState();
-        window.setBearerToken = setBearerToken;
-        
         // Initialize the UI from the module
-        if (typeof window.idioUI !== 'undefined') {
+        if (typeof window.idioUI !== 'undefined' && typeof window.idioUI.createUI === 'function') {
             window.idioUI.createUI();
         } else {
-            console.error('Margoedi Tools: UI module not loaded properly.');
+            console.error('Margoedi Tools: UI module or createUI function not loaded properly.');
         }
     }
     

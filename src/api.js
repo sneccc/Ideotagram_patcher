@@ -13,11 +13,9 @@ function getHeaders() {
         'Origin': 'https://ideogram.ai'
     };
     
-    // Get the authentication from the global getter
-    const { bearerToken } = window.getAuthState ? window.getAuthState() : { bearerToken: "" };
-    
-    if (bearerToken) {
-        headers['Authorization'] = `Bearer ${bearerToken}`;
+    // Use IDIO.API.settings directly for the bearer token
+    if (IDIO.API.settings.bearerToken) {
+        headers['Authorization'] = `Bearer ${IDIO.API.settings.bearerToken}`;
     }
     
     return headers;
@@ -102,7 +100,6 @@ function deleteApi(url, payload) {
 // Function to submit an event
 function submitEvent(eventKey, metadata) {
     const eventUrl = 'https://ideogram.ai/api/e/submit';
-    const { userId, userHandle } = window.getAuthState ? window.getAuthState() : { userId: "", userHandle: "" };
     
     const payload = {
         event_key: eventKey,
@@ -111,8 +108,8 @@ function submitEvent(eventKey, metadata) {
             triggeredUtcTime: Date.now(),
             userAgent: navigator.userAgent,
             isMobileLayout: false,
-            userHandle: userHandle || "",
-            userId: userId || "",
+            userHandle: IDIO.API.settings.userHandle || "",
+            userId: IDIO.API.settings.userId || "",
             location: Intl.DateTimeFormat().resolvedOptions().timeZone,
             generationInProgress: false,
             ...metadata
@@ -126,7 +123,6 @@ function submitEvent(eventKey, metadata) {
 async function downloadImageWithTimeout(imageUrl, responseId, maxRetries = 2) {
     const timeout = 5000; // 5 seconds timeout
     let attempts = 0;
-    const { bearerToken } = window.getAuthState ? window.getAuthState() : { bearerToken: "" };
 
     while (attempts <= maxRetries) {
         try {
@@ -141,7 +137,7 @@ async function downloadImageWithTimeout(imageUrl, responseId, maxRetries = 2) {
                     url: imageUrl,
                     headers: {
                         'Referer': 'https://ideogram.ai/',
-                        'Authorization': `Bearer ${bearerToken}`,
+                        'Authorization': `Bearer ${IDIO.API.settings.bearerToken}`,
                         'Origin': 'https://ideogram.ai'
                     },
                     responseType: 'blob',
@@ -184,6 +180,12 @@ async function downloadImageWithTimeout(imageUrl, responseId, maxRetries = 2) {
     }
 }
 
+// Function to set auth details (called from main.js)
+function setAuthDetails(token, userId, userHandle) {
+    // Update the global IDIO.API settings
+    return IDIO.API.setAuthDetails(token, userId, userHandle);
+}
+
 // Export API functions
 window.idioApi = {
     STYLE_EXPERT,
@@ -193,7 +195,12 @@ window.idioApi = {
     deleteApi,
     submitEvent,
     downloadImageWithTimeout,
+    setAuthDetails,
     
-    // Getters for auth state
-    getAuthState: () => window.getAuthState ? window.getAuthState() : { bearerToken: "", userId: "", userHandle: "" }
+    // For backward compatibility
+    getAuthState: () => ({
+        bearerToken: IDIO.API.settings.bearerToken,
+        userId: IDIO.API.settings.userId,
+        userHandle: IDIO.API.settings.userHandle
+    })
 }; 

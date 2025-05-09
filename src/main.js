@@ -45,22 +45,29 @@ const Controller = {
 
     // Set bearer token and user info
     setBearerToken: function() {
-        const input = prompt('Enter your Bearer token and User ID and User Handle (optional) separated by comma:\nFormat: token,userid,userhandle', '');
-        if (!input) return;
+        const input = prompt(
+            'Enter your Bearer token, User ID, and User Handle separated by comma.\nFormat: token,userid,userhandle\nTo clear a value, leave its part empty (e.g., "token,,handle" clears User ID).',
+            `${IDIO.API.settings.bearerToken},${IDIO.API.settings.userId},${IDIO.API.settings.userHandle}`
+        );
 
-        const [token, inputUserId, inputUserHandle] = input.split(',').map(s => s.trim());
-
-        if (!token) {
-            window.idioUI.showNotification('No Bearer token was provided.', 'error');
+        if (input === null) { // User pressed cancel
+            console.log('Token setting cancelled.');
             return;
         }
 
-        const { bearerToken, userId, userHandle } = window.idioApi.setAuthDetails(token, inputUserId, inputUserHandle);
+        const parts = input.split(',');
+        const tokenInput = (parts[0] !== undefined ? parts[0] : "").trim();
+        const userIdInput = parts.length > 1 ? (parts[1] !== undefined ? parts[1] : "").trim() : undefined;
+        const userHandleInput = parts.length > 2 ? (parts[2] !== undefined ? parts[2] : "").trim() : undefined;
+
+        // Use the API method for setting auth details
+        const { bearerToken, userId, userHandle } = IDIO.API.setAuthDetails(tokenInput, userIdInput, userHandleInput);
 
         window.idioUI.showNotification('Authentication details set successfully.', 'info');
-        console.log('Bearer token set successfully.');
-        console.log(`User ID set to: ${userId}`);
-        console.log(`User Handle set to: ${userHandle}`);
+        console.log('Configuration updated:');
+        console.log(`Bearer Token: ${bearerToken}`);
+        console.log(`User ID: ${userId}`);
+        console.log(`User Handle: ${userHandle}`);
     },
 
     // Handle prompt file selection
@@ -100,4 +107,4 @@ if (document.readyState === 'complete') {
 }
 
 // Export the controller
-window.idioController = Controller; 
+window.idioController = Controller;
