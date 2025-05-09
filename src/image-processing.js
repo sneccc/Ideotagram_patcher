@@ -14,11 +14,13 @@ async function fetchImagesAndSubmitToEagle() {
     
     if (!bearerToken) {
         console.error('Bearer token is not set. Click "Set Token" to set it.');
+        alert('Bearer token is not set. Please click "Set Token" to set it first.');
         return;
     }
 
     if (!userId) {
         console.error('User ID is not set. Click "Set Token" to set it.');
+        alert('User ID is not set. Please click "Set Token" to set it first.');
         return;
     }
 
@@ -101,6 +103,7 @@ async function fetchTopImagesAndSubmitToEagle(timeline = 'ALL') {
     
     if (!bearerToken) {
         console.error('Bearer token is not set. Click "Set Token" to set it.');
+        alert('Bearer token is not set. Please click "Set Token" to set it first.');
         return;
     }
 
@@ -238,6 +241,7 @@ async function handleImageDescription() {
     
     if (!bearerToken) {
         console.error('Bearer token is not set. Click "Set Token" to set it.');
+        alert('Bearer token is not set. Please click "Set Token" to set it first.');
         return;
     }
 
@@ -402,15 +406,18 @@ async function requestDescription(imageId, retryCount = 0, maxRetries = 2) {
 async function deleteAllUploads() {
     const { getAuthState, fetchApi, submitEvent, deleteApi } = window.idioApi;
     
+    // Get the latest auth state
     const { bearerToken, userId, userHandle } = getAuthState();
     
     if (!bearerToken) {
         console.error('Bearer token is not set. Click "Set Token" to set it.');
+        alert('Bearer token is not set. Please click "Set Token" to set it first.');
         return;
     }
 
     if (!userId) {
         console.error('User ID is not set. Click "Set Token" to set it.');
+        alert('User ID is not set. Please click "Set Token" to set it first.');
         return;
     }
 

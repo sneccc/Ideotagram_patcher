@@ -13,8 +13,8 @@ function getHeaders() {
         'Origin': 'https://ideogram.ai'
     };
     
-    // Get the authentication from the window object
-    const { bearerToken } = window.authState || {};
+    // Get the authentication from the global getter
+    const { bearerToken } = window.getAuthState ? window.getAuthState() : { bearerToken: "" };
     
     if (bearerToken) {
         headers['Authorization'] = `Bearer ${bearerToken}`;
@@ -102,7 +102,7 @@ function deleteApi(url, payload) {
 // Function to submit an event
 function submitEvent(eventKey, metadata) {
     const eventUrl = 'https://ideogram.ai/api/e/submit';
-    const { userId, userHandle } = window.authState || {};
+    const { userId, userHandle } = window.getAuthState ? window.getAuthState() : { userId: "", userHandle: "" };
     
     const payload = {
         event_key: eventKey,
@@ -126,7 +126,7 @@ function submitEvent(eventKey, metadata) {
 async function downloadImageWithTimeout(imageUrl, responseId, maxRetries = 2) {
     const timeout = 5000; // 5 seconds timeout
     let attempts = 0;
-    const { bearerToken } = window.authState || {};
+    const { bearerToken } = window.getAuthState ? window.getAuthState() : { bearerToken: "" };
 
     while (attempts <= maxRetries) {
         try {
@@ -195,5 +195,5 @@ window.idioApi = {
     downloadImageWithTimeout,
     
     // Getters for auth state
-    getAuthState: () => window.authState || { bearerToken: "", userId: "", userHandle: "" }
+    getAuthState: () => window.getAuthState ? window.getAuthState() : { bearerToken: "", userId: "", userHandle: "" }
 }; 

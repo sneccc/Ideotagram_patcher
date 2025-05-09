@@ -18,10 +18,10 @@
     // Base URL for the GitHub repository
     const REPO_URL = 'https://raw.githubusercontent.com/sneccc/Ideotagram_patcher/main/src/';
     
-    // Default values for authentication
-    let bearerToken = ""; // Authorization token placeholder
-    let userId = ""; // User ID placeholder
-    let userHandle = ""; // User handle placeholder
+    // Get stored authentication values or use defaults
+    let bearerToken = GM_getValue("bearerToken", "");
+    let userId = GM_getValue("userId", "");
+    let userHandle = GM_getValue("userHandle", "");
     
     // Function to set the Bearer token and User ID
     function setBearerToken() {
@@ -32,6 +32,7 @@
 
         if (!token) {
             console.warn('No Bearer token was provided.');
+            alert('No Bearer token was provided. Please try again.');
             return;
         }
 
@@ -39,12 +40,20 @@
         userId = inputUserId || "";
         userHandle = inputUserHandle || "";
 
+        // Store values for persistence between page reloads
+        GM_setValue("bearerToken", bearerToken);
+        GM_setValue("userId", userId);
+        GM_setValue("userHandle", userHandle);
+
         console.log('Bearer token set successfully.');
         console.log(`User ID set to: ${userId}`);
         console.log(`User Handle set to: ${userHandle}`);
         
         // Make these values accessible to other modules
         window.authState = { bearerToken, userId, userHandle };
+        
+        // Show success message to user
+        alert('Authentication credentials saved successfully!');
     }
     
     // List of modules to load in order
@@ -95,6 +104,9 @@
         console.log('Margoedi Tools: Loading modules...');
         
         try {
+            // Initialize and share auth state before loading modules
+            updateAuthState();
+            
             // Load modules in sequence
             for (const module of modules) {
                 const moduleUrl = REPO_URL + module;
@@ -114,10 +126,25 @@
         }
     }
     
+    // Function to update the authentication state
+    function updateAuthState() {
+        // Share auth state globally
+        window.authState = { bearerToken, userId, userHandle };
+        
+        // Create auth state getter for consistent access
+        window.getAuthState = function() {
+            return {
+                bearerToken: GM_getValue("bearerToken", ""),
+                userId: GM_getValue("userId", ""),
+                userHandle: GM_getValue("userHandle", "")
+            };
+        };
+    }
+    
     // Function to initialize the UI
     function initUI() {
         // Expose the auth state and token setter to the window
-        window.authState = { bearerToken, userId, userHandle };
+        updateAuthState();
         window.setBearerToken = setBearerToken;
         
         // Initialize the UI from the module
