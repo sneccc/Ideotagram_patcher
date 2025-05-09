@@ -25,35 +25,67 @@
     
     // Function to set the Bearer token and User ID
     function setBearerToken() {
-        const input = prompt('Enter your Bearer token and User ID and User Handle (optional) separated by comma:\nFormat: token,userid,userhandle', '');
-        if (!input) return;
+        // Fetch current values from storage to pre-fill the prompt accurately
+        const currentToken = GM_getValue('bearerToken', '');
+        // Use the initial placeholder/default from the config object definition if nothing is in storage.
+        // This mirrors what loadConfig would establish for config.userId / config.userHandle initially.
+        const currentUserId = GM_getValue('userId', config.userId);
+        const currentUserHandle = GM_getValue('userHandle', config.userHandle);
 
-        const [token, inputUserId, inputUserHandle] = input.split(',').map(s => s.trim());
+        const input = prompt(
+            'Enter your Bearer token, User ID, and User Handle separated by comma.\nFormat: token,userid,userhandle\nTo clear a value, leave its part empty (e.g., "token,,handle" clears User ID).',
+            `${currentToken},${currentUserId},${currentUserHandle}`
+        );
 
-        if (!token) {
-            console.warn('No Bearer token was provided.');
-            alert('No Bearer token was provided. Please try again.');
+        if (input === null) { // User pressed cancel
+            console.log('Token setting cancelled.');
             return;
         }
 
-        bearerToken = token;
-        userId = inputUserId || "";
-        userHandle = inputUserHandle || "";
+        const parts = input.split(',');
+        // Get trimmed input for each part, default to empty string if part is missing then trim (though split usually gives empty strings)
+        const tokenInput = (parts[0] !== undefined ? parts[0] : "").trim();
+        // userIdInput will be undefined if only token was entered, or "" if "token,," was entered.
+        const userIdInput = parts.length > 1 ? (parts[1] !== undefined ? parts[1] : "").trim() : undefined;
+        const userHandleInput = parts.length > 2 ? (parts[2] !== undefined ? parts[2] : "").trim() : undefined;
 
-        // Store values for persistence between page reloads
-        GM_setValue("bearerToken", bearerToken);
-        GM_setValue("userId", userId);
-        GM_setValue("userHandle", userHandle);
+        // Always update bearer token based on input. If empty, it's cleared.
+        config.bearerToken = tokenInput;
+        GM_setValue('bearerToken', config.bearerToken);
+        if (config.bearerToken) {
+            console.log('Bearer token set successfully.');
+        } else {
+            console.log('Bearer token cleared or not provided.');
+        }
 
-        console.log('Bearer token set successfully.');
-        console.log(`User ID set to: ${userId}`);
-        console.log(`User Handle set to: ${userHandle}`);
-        
-        // Make these values accessible to other modules
-        window.authState = { bearerToken, userId, userHandle };
-        
-        // Show success message to user
-        alert('Authentication credentials saved successfully!');
+        // User ID: If part was provided in the input (even if an empty string), update.
+        // If not provided (e.g., user only entered a token), config.userId retains its current (loaded/default) value.
+        if (userIdInput !== undefined) {
+            config.userId = userIdInput;
+            GM_setValue('userId', config.userId);
+            console.log(`User ID set to: "${config.userId}"`);
+        } else {
+            // userIdInput is undefined, meaning user entered only "token" or submitted without changing that part.
+            // config.userId already holds currentUserId (loaded from storage or the initial default).
+            // No change to config.userId, and GM_setValue is not strictly needed unless ensuring default is written.
+            console.log(`User ID not specified in input, remains: "${config.userId}"`);
+        }
+
+        // User Handle: If part was provided in the input, update.
+        if (userHandleInput !== undefined) {
+            config.userHandle = userHandleInput;
+            GM_setValue('userHandle', config.userHandle);
+            console.log(`User Handle set to: "${config.userHandle}"`);
+        } else {
+            // userHandleInput is undefined. config.userHandle retains its current value.
+            console.log(`User Handle not specified in input, remains: "${config.userHandle}"`);
+        }
+
+        console.log('Configuration updated:');
+        console.log(`Bearer Token: ${config.bearerToken}`);
+        console.log(`User ID: ${config.userId}`);
+        console.log(`User Handle: ${config.userHandle}`);
+        alert('Token, User ID, and User Handle settings have been processed and saved.');
     }
     
     // List of modules to load in order
